@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+backend/output/
+
+# Flutter / Dart
+.build/
+.dart_tool/
+pubspec.lock
+ios/
+android/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.melos_tool
+
+# VS Code
+.vscode/
+.idea/
