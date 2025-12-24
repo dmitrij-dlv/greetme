@@ -9,8 +9,10 @@ class GenerateRequest(BaseModel):
 
 
 class GenerateResponse(BaseModel):
+    status: str = Field(..., description="ok on success")
     prompt: str
-    pdf_base64: str
+    pdf_url: str
     preview_base64: str
     filename: str
+    pdf_base64: Optional[str] = None
     message: Optional[str] = None

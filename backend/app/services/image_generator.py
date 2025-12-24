@@ -1,31 +1,50 @@
+import asyncio
+import base64
 import random
 import textwrap
 from io import BytesIO
 from typing import Tuple
 
 from PIL import Image, ImageDraw, ImageFont
+from openai import OpenAI
 
 from app import config
 
 
 class ImageGenerator:
-    """Placeholder image generator.
-
-    In production this would call an AI image model. For the MVP we
-    synthesize a high-contrast drawing so the rest of the pipeline can run.
-    """
+    """Image generator backed by OpenAI with a safe placeholder fallback."""
 
     def __init__(self, width: int = 2480, height: int = 3508):
         self.width = width
         self.height = height
+        self.client = OpenAI(api_key=config.OPENAI_API_KEY) if config.OPENAI_API_KEY else None
 
     def build_prompt(self, theme: str, age_group: str) -> str:
         return config.PROMPT_TEMPLATE.format(theme=theme, age_group=age_group)
 
-    def generate_image(self, theme: str, age_group: str) -> Tuple[str, Image.Image]:
+    async def generate_image(self, theme: str, age_group: str) -> Tuple[str, Image.Image]:
         prompt = self.build_prompt(theme, age_group)
-        image = self._draw_placeholder(theme, age_group)
+        if self.client:
+            try:
+                image = await asyncio.to_thread(self._generate_with_openai, prompt)
+                return prompt, image
+            except Exception:
+                # Fallback to placeholder while still returning a usable asset.
+                pass
+
+        image = await asyncio.to_thread(self._draw_placeholder, theme, age_group)
         return prompt, image
+
+    def _generate_with_openai(self, prompt: str) -> Image.Image:
+        response = self.client.images.generate(
+            model=config.OPENAI_MODEL,
+            prompt=prompt,
+            size="1024x1024",
+            response_format="b64_json",
+        )
+        image_b64 = response.data[0].b64_json
+        image_bytes = base64.b64decode(image_b64)
+        return Image.open(BytesIO(image_bytes)).convert("RGB")
 
     def _draw_placeholder(self, theme: str, age_group: str) -> Image.Image:
         img = Image.new("RGB", (self.width, self.height), "white")

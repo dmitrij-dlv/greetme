@@ -19,16 +19,25 @@ frontend/           # Flutter client
 
 ## Backend setup
 
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+1. Configure environment (optional but recommended for real images):
+
+   ```bash
+   cd backend
+   cp .env.example .env  # edit OPENAI_API_KEY if available
+   ```
+
+2. Install and run:
+
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
 
 - Endpoint: `POST /generate` with JSON payload `{ "theme": "animals", "age_group": "3-4" }`
-- Returns: prompt, base64 preview image, and base64 PDF (A4 @ 300 DPI). Files are also saved to `backend/output/`.
+- Returns: JSON including `status`, generated prompt, preview (base64), `pdf_url` (served from `/files/...`), and `pdf_base64` for direct download.
+- PDFs are stored under `backend/output/` and served by FastAPI static files.
 - Health check: `GET /health`
 
 ## Frontend setup
