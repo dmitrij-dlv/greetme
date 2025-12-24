@@ -1,0 +1,7 @@
+fastapi==0.110.1
+uvicorn[standard]==0.29.0
+pillow==10.3.0
+opencv-python-headless==4.9.0.80
+reportlab==4.1.0
+python-multipart==0.0.9
+openai>=1.30.0
