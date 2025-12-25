@@ -70,7 +70,10 @@ class ImageGenerator:
         label = f"{theme.title()} | Ages {age_group}"
         font = ImageFont.load_default()
         wrapped = textwrap.fill(label, width=30)
-        text_width, text_height = draw.multiline_textsize(wrapped, font=font)
+        # multiline_textsize was removed; multiline_textbbox provides the bounding box.
+        bbox = draw.multiline_textbbox((0, 0), wrapped, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
         draw.multiline_text(
             ((self.width - text_width) / 2, self.height * 0.05),
             wrapped,
