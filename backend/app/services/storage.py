@@ -1,4 +1,5 @@
 import base64
+import uuid
 from pathlib import Path
 from typing import Tuple
 
@@ -27,4 +28,5 @@ class StorageService:
 
     def build_filename(self, theme: str) -> str:
         safe_theme = theme.replace(" ", "_").lower()
-        return f"coloring_{safe_theme}.pdf"
+        token = uuid.uuid4().hex
+        return f"coloring_{safe_theme}_{token}.pdf"

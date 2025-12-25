@@ -57,6 +57,7 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
   bool isLoading = false;
   String? previewBase64;
   String? pdfBase64;
+  String? pdfUrl;
   String statusMessage = 'Pick a theme and age to start.';
 
   Future<void> _generate() async {
@@ -79,9 +80,13 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
       }
 
       final payload = jsonDecode(response.body) as Map<String, dynamic>;
+      if (payload['status'] != 'ok') {
+        throw HttpException('Request failed');
+      }
       setState(() {
         previewBase64 = payload['preview_base64'] as String?;
         pdfBase64 = payload['pdf_base64'] as String?;
+        pdfUrl = payload['pdf_url'] as String?;
         statusMessage = payload['message'] as String? ?? 'Ready to download';
       });
     } catch (err) {
@@ -96,9 +101,18 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
   }
 
   Future<void> _downloadPdf() async {
-    if (pdfBase64 == null) return;
+    List<int>? bytes;
+    if (pdfBase64 != null) {
+      bytes = base64Decode(pdfBase64!);
+    } else if (pdfUrl != null) {
+      final resp = await http.get(Uri.parse('$apiBaseUrl$pdfUrl'));
+      if (resp.statusCode == 200) {
+        bytes = resp.bodyBytes;
+      }
+    }
 
-    final bytes = base64Decode(pdfBase64!);
+    if (bytes == null) return;
+
     final directory = await getApplicationDocumentsDirectory();
     final file = File('${directory.path}/coloring_page.pdf');
     await file.writeAsBytes(bytes, flush: true);
@@ -211,7 +225,9 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
               children: [
                 Expanded(child: Text(statusMessage)),
                 ElevatedButton.icon(
-                  onPressed: (!isLoading && pdfBase64 != null) ? _downloadPdf : null,
+                  onPressed: (!isLoading && (pdfBase64 != null || pdfUrl != null))
+                      ? _downloadPdf
+                      : null,
                   icon: const Icon(Icons.download),
                   label: const Text('Download PDF'),
                 ),
